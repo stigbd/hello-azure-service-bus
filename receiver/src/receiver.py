@@ -67,7 +67,6 @@ amqp_logger.setLevel(logging.WARNING)
 # Expose a health check endpoint using FastAPI:
 async def simple_web_server() -> None:
     """Set up simple web server to expose a health check endpoint."""
-    logger.info("Setting up the client")
     api = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
     @api.get("/health")
@@ -85,10 +84,8 @@ async def simple_web_server() -> None:
 async def main() -> None:
     """Set up the client and receive messages."""
     logger.info("Starting the web server")
-
     running_tasks = set()
     task = asyncio.create_task(simple_web_server())
-
     running_tasks.add(task)
     task.add_done_callback(lambda t: running_tasks.remove(t))
 
