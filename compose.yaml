@@ -1,0 +1,85 @@
+name: microsoft-azure-servicebus-emulator
+services:
+  receiver:
+    build:
+      context: .
+      dockerfile: receiver/Dockerfile
+    environment:
+      AZURE_SERVICE_BUS_CONNECTION_STRING: ${AZURE_SERVICE_BUS_CONNECTION_STRING}
+      AZURE_SERVICE_BUS_QUEUE_NAME: ${AZURE_SERVICE_BUS_QUEUE_NAME}
+    ports:
+      - "8001:8000"
+    depends_on:
+      - service-bus-emulator
+    healthcheck:
+      test: python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()" || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: on-failure
+
+  sender:
+    build:
+      context: .
+      dockerfile: sender/Dockerfile
+    environment:
+      AZURE_SERVICE_BUS_CONNECTION_STRING: ${AZURE_SERVICE_BUS_CONNECTION_STRING}
+      AZURE_SERVICE_BUS_QUEUE_NAME: ${AZURE_SERVICE_BUS_QUEUE_NAME}
+    ports:
+      - "8002:8000"
+    depends_on:
+      - service-bus-emulator
+    healthcheck:
+      test: python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()" || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: on-failure
+
+  service-bus-emulator:
+    image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+    pull_policy: always
+    volumes:
+      - "${CONFIG_PATH}:/ServiceBus_Emulator/ConfigFiles/Config.json"
+    ports:
+      - "5672:5672"
+      - "5300:5300"
+    environment:
+      SQL_SERVER: mssql
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}" # Password should be same as what is set for SQL Server Linux
+      ACCEPT_EULA: ${ACCEPT_EULA}
+      SQL_WAIT_INTERVAL: ${SQL_WAIT_INTERVAL} # Optional: Time in seconds to wait for SQL to be ready (default is 15 seconds)
+    depends_on:
+      - mssql
+
+  mssql:
+    image: "mcr.microsoft.com/mssql/server:2022-latest"
+    environment:
+      ACCEPT_EULA: ${ACCEPT_EULA}
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}" # To be filled by user as per policy : https://learn.microsoft.com/en-us/sql/relational-databases/security/strong-passwords?view=sql-server-linux-ver16
+
+  # Redis cache for Service Bus Explorer UI
+  redis:
+    image: redis:8.0-M02-alpine
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --save 60 1 --loglevel warning --requirepass pass@w0rd1
+
+  # Web UI for Service Bus Emulator
+  service-bus-explorer:
+    image: ghcr.io/tombiddulph/service-bus-emulator-explorer:main
+    volumes:
+      - "${CONFIG_PATH}:/app/service-bus-config.json:ro"
+    ports:
+      - "8084:8080"
+    environment:
+      - ServiceBus__ConnectionString=Endpoint=sb://service-bus-emulator:5672;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;
+      - ServiceBus_RefreshIntervalMs=5000
+      - Redis__ConnectionString=redis:6379,abortConnect=false,ssl=false,password=pass@w0rd1
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+    depends_on:
+      - service-bus-emulator
+      - redis
