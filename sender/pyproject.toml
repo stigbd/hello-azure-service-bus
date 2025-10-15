@@ -1,0 +1,59 @@
+[project]
+name = "sender"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "azure-identity>=1.25.1",
+    "azure-servicebus>=7.14.2",
+    "fastapi>=0.119.0",
+    "prometheus-fastapi-instrumentator>=7.1.0",
+    "uvicorn>=0.37.0",
+]
+
+[dependency-groups]
+dev = [
+    "deptry>=0.23.1",
+    "pip-audit>=2.9.0",
+    "poethepoet>=0.37.0",
+    "ruff>=0.14.0",
+    "ty>=0.0.1a22",
+]
+
+[tool.ruff]
+line-length = 94
+
+[tool.ruff.lint]
+select = ["ALL"]
+# and then manually ignore annoying ones:
+ignore = ["D211", "D213", "COM812", "D203", "ISC001"]
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    # at least this three should be fine in tests:
+    "S101",   # asserts allowed in tests...
+    "ANN401", # Any should be allowed
+    "BLE001", # Catch blind exception in tests should be allowed
+]
+"alembic/**/*.py" = [
+    # alembic migrations will not be linted:
+    "ALL", # Commented-out code should be allowed
+]
+
+
+[tool.ruff.lint.isort]
+# so it knows to group first-party stuff last
+known-first-party = ["src"]
+
+[tool.poe.tasks]
+format = "uv run ruff format"
+lint = "uv run ruff check --fix"
+check-types = "uv run ty check ."
+check-deps = "uv run deptry ."
+audit = "uv run pip-audit ."
+release = [
+    "lint",
+    "check-types",
+    "check-deps",
+    "audit",
+]
