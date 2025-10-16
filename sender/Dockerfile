@@ -19,4 +19,4 @@ RUN uv sync --frozen
 EXPOSE 8000
 
 # Run the application.
-CMD ["/app/.venv/bin/uvicorn", "app:api",  "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+CMD ["/app/.venv/bin/uvicorn", "app:app",  "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

@@ -3,7 +3,7 @@ name = "receiver"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
     "azure-identity>=1.25.1",
     "azure-servicebus>=7.14.2",
@@ -57,4 +57,9 @@ release = [
     "check-types",
     "check-deps",
     "audit",
+]
+
+[tool.uv.workspace]
+members = [
+    "logger",
 ]

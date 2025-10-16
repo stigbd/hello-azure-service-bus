@@ -20,5 +20,17 @@ To run:
 docker compose up -d
 ```
 
+Monitor the logs of the receiver:
+
+```bash
+docker compose logs -f receiver
+```
+
+Send a message via the sender api:
+
+```bash
+curl -i -X POST http://localhost:8002/message -H "Content-type: application/json" -d '{"content": "Yo!"}'
+```
+
 Ref:
 - https://learn.microsoft.com/en-us/azure/service-bus-messaging/test-locally-with-service-bus-emulator?tabs=docker-linux-container
