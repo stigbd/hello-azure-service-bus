@@ -15,19 +15,17 @@ management using mechanisms like asyncio.Lock.
 import logging
 import logging.config
 import os
-from pathlib import Path
-import yaml
+from http import HTTPStatus
 
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
-from fastapi import FastAPI
+from azure.servicebus.exceptions import ServiceBusConnectionError
+from fastapi import FastAPI, HTTPException, Response
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
-from pythonjsonlogger.json import JsonFormatter
 
 AZURE_SERVICE_BUS_CONNECTION_STRING = os.environ["AZURE_SERVICE_BUS_CONNECTION_STRING"]
 AZURE_SERVICE_BUS_QUEUE_NAME = os.environ["AZURE_SERVICE_BUS_QUEUE_NAME"]
-
 # Get the logger:
 logger = logging.getLogger("uvicorn.error")
 # Get the logger for Azure Service Bus
@@ -58,12 +56,15 @@ async def send_message(message: Message) -> None:
                 queue_name=AZURE_SERVICE_BUS_QUEUE_NAME
             )
             logger.info("Creating the ServiceBusSender context")
-            async with sender:
-                logger.info("Sending message...")
-                msg = ServiceBusMessage(message.model_dump_json())
-                await sender.send_messages(msg)
-
-    logger.info("Send message is done.")
+            try:
+                async with sender:
+                    logger.info("Sending message...")
+                    msg = ServiceBusMessage(message.model_dump_json())
+                    await sender.send_messages(msg)
+                    logger.info("Send message is done.")
+            except ServiceBusConnectionError:
+                logger.exception("ServiceBusConnectionError")
+                raise
 
 
 app = FastAPI()
@@ -78,7 +79,12 @@ async def health() -> dict:
 
 
 @app.post("/message")
-async def post_message(message: Message) -> dict:
+async def post_message(message: Message) -> Response:
     """Endpoint to send a message to the Service Bus Queue."""
-    await send_message(message)
-    return {"status": "message sent"}
+    try:
+        await send_message(message)
+    except ServiceBusConnectionError as e:
+        logger.exception("Failed to send message due to connection error.")
+        raise HTTPException(status_code=500, detail="Service Bus connection error") from e
+
+    return Response(status_code=HTTPStatus.ACCEPTED)

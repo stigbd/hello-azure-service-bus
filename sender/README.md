@@ -9,10 +9,10 @@ uv run --env-file .env fastapi dev
 
 Or with uvicorn:
 ```
-uv run --env-file=.env uvicorn app:app --host 0.0.0.0 --port 8000 --reload --reload-include "*.yaml"
+uv run --env-file=.env uvicorn app:app --host 0.0.0.0 --port 8000 --reload --reload-include "*.yaml" --log-config logging-config.yaml
 ```
 
 Then in another terminal, send a message:
 ```bash
-curl -i -X POST http://localhost:8000/message -d '{"content": "Yo!"}' -H "Content-Type: application/json"
+curl -i -X POST http://localhost:8000/message -H "Content-type: application/json" -d '{"content": "Yo!"}'
 ```

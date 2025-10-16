@@ -46,6 +46,9 @@ ignore = ["D211", "D213", "COM812", "D203", "ISC001"]
 # so it knows to group first-party stuff last
 known-first-party = ["app"]
 
+[tool.deptry.per_rule_ignores]
+DEP002 = ["python-json-logger"]
+
 [tool.poe.tasks]
 format = "uv run ruff format"
 lint = "uv run ruff check --fix"
