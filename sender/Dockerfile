@@ -18,4 +18,5 @@ RUN uv sync --frozen
 # Expose the application port.
 EXPOSE 8000
 
-CMD ["uv", "run", "src/sender.py"]
+# Run the application.
+CMD ["/app/.venv/bin/uvicorn", "app:api",  "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
