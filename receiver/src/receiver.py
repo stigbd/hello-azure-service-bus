@@ -27,11 +27,10 @@ logger = logging.getLogger("hello-azure-service-bus.receiver")
 # 2. Set the logging level for the logger
 # Messages with a severity level lower than this will be ignored.
 # Levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 # 3. Create a console handler (to display logs on the console)
 console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setLevel(logging.INFO)  # Set handler-specific level
-# 4. Create a formatter (to define the log message format)
 
 
 # 4. Create a formatter (to define the log message format)
